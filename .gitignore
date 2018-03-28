@@ -37,3 +37,6 @@ build/
 
 # IDE
 .idea
+
+# ignore Vocabulary text file:
+Vocabulary/ORBvoc.txt
