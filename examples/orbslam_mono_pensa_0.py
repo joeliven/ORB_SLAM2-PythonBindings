@@ -6,6 +6,7 @@ import orbslam2
 import time
 import cv2
 from lib.utils.file_utils import get_filenames
+from pprint import pprint
 
 
 def main(vocab_path, settings_path, sequence_dir, fps=10):
@@ -57,7 +58,10 @@ def main(vocab_path, settings_path, sequence_dir, fps=10):
         if ttrack < t:
             time.sleep(t - ttrack)
 
-    save_trajectory(slam.get_trajectory_points(), 'trajectory.txt')
+    traj = slam.get_trajectory_points()
+    print('len(traj): %d' % len(traj))
+    pprint(traj)
+    save_trajectory(traj, 'trajectory.txt')
 
     slam.shutdown()
 
