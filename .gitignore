@@ -34,4 +34,6 @@
 
 # build folders
 build/
+
+# IDE
 .idea
