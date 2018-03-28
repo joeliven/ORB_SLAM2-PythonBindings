@@ -49,8 +49,8 @@ def main(vocab_path, settings_path, sequence_path):
             time.sleep(t - ttrack)
 
     traj = slam.get_trajectory_points()
-    print('len(traj): %d' % len(traj))
     pprint(traj)
+    print('len(traj): %d' % len(traj))
     save_trajectory(traj, 'trajectory.txt')
 
     slam.shutdown()

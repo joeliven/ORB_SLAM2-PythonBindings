@@ -11,14 +11,14 @@ from pprint import pprint
 
 def main(vocab_path, settings_path, sequence_dir, fps=10):
     fps_inv = 1./float(fps)
-    im_paths = get_filenames(sequence_dir, 'jpg')
+    im_paths = sorted(get_filenames(sequence_dir, 'jpg'))
     timestamps = []
     for i in range(len(im_paths)):
         if i == 0:
             t = time.time()
         else:
             t = timestamps[i-1] + fps_inv
-            timestamps.append(t)
+        timestamps.append(t)
 
     num_images = len(im_paths)
 
@@ -59,8 +59,8 @@ def main(vocab_path, settings_path, sequence_dir, fps=10):
             time.sleep(t - ttrack)
 
     traj = slam.get_trajectory_points()
-    print('len(traj): %d' % len(traj))
     pprint(traj)
+    print('len(traj): %d' % len(traj))
     save_trajectory(traj, 'trajectory.txt')
 
     slam.shutdown()
