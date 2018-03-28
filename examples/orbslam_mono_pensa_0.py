@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
+import _init_paths
 import sys
-import os.path
+import os
 import orbslam2
 import time
 import cv2
+from lib.utils.file_utils import get_filenames
 
 
-def main(vocab_path, settings_path, sequence_path):
+def main(vocab_path, settings_path, sequence_dir, fps=10):
+    fps_inv = 1./float(fps)
+    im_paths = get_filenames(sequence_dir, 'jpg')
+    timestamps = []
+    for i in range(len(im_paths)):
+        if i == 0:
+            t = time.time()
+        else:
+            t = timestamps[i-1] + fps_inv
+            timestamps.append(t)
 
-    rgb_filenames, timestamps = load_images(sequence_path)
-    num_images = len(timestamps)
+    num_images = len(im_paths)
 
     slam = orbslam2.System(vocab_path, settings_path, orbslam2.Sensor.MONOCULAR)
     slam.set_use_viewer(False)
@@ -21,17 +31,17 @@ def main(vocab_path, settings_path, sequence_path):
     print('Images in the sequence: {0}'.format(num_images))
 
     for idx in range(num_images):
-        image = cv2.imread(os.path.join(sequence_path, rgb_filenames[idx]), cv2.IMREAD_UNCHANGED)
+        im_path = im_paths[idx]
+        image = cv2.imread(im_path, cv2.IMREAD_UNCHANGED)
         tframe = timestamps[idx]
 
         if image is None:
-            print("failed to load image at {0}".format(os.path.join(sequence_path, rgb_filenames[idx])))
+            print("failed to load image at {0}".format(im_path))
             return 1
 
         t1 = time.time()
         pose_success = slam.process_image_mono(image, tframe)
         t2 = time.time()
-
         status = 'success' if pose_success else 'failure'
         print('idx %d: pose %s' % (idx, status))
 
@@ -58,18 +68,6 @@ def main(vocab_path, settings_path, sequence_path):
     print('mean tracking time: {0}'.format(total_time / num_images))
 
     return 0
-
-
-def load_images(path_to_association):
-    rgb_filenames = []
-    timestamps = []
-    with open(os.path.join(path_to_association, 'rgb.txt')) as times_file:
-        for line in times_file:
-            if len(line) > 0 and not line.startswith('#'):
-                t, rgb = line.rstrip().split(' ')[0:2]
-                rgb_filenames.append(rgb)
-                timestamps.append(float(t))
-    return rgb_filenames, timestamps
 
 
 def save_trajectory(trajectory, filename):
