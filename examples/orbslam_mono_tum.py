@@ -12,7 +12,7 @@ def main(vocab_path, settings_path, sequence_path):
     num_images = len(timestamps)
 
     slam = orbslam2.System(vocab_path, settings_path, orbslam2.Sensor.MONOCULAR)
-    slam.set_use_viewer(True)
+    slam.set_use_viewer(False)
     slam.initialize()
 
     times_track = [0 for _ in range(num_images)]
