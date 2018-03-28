@@ -38,5 +38,7 @@ build/
 # IDE
 .idea
 
+__pycache__
+
 # ignore Vocabulary text file:
 Vocabulary/ORBvoc.txt
