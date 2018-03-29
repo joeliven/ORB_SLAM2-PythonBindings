@@ -1,0 +1,402 @@
+# outside of docker container:
+docker pull ros:kinetic-ros-base-xenial
+docker run --name ros0 -it ros:kinetic-ros-base-xenial
+
+
+# now in docker container:
+cd /
+
+# update apt package manager
+apt-get update
+apt-get upgrade
+
+# ORBSLAM2
+# --------------------------------------------------------------------
+	# ORBSLAM2-->deps:PANGOLIN
+	# ----------------------------------------------------------------
+	#https://github.com/stevenlovegrove/Pangolin
+
+		# PANGOLIN-->deps: OPENGL (Desktop / ES / ES2)
+		# ------------------------------------------------------------
+		# http://www.prinmath.com/csci5229/misc/install.html
+		apt-get install freeglut3-dev
+		
+
+		# PANGOLIN-->deps: GLEW
+		apt-get install libglew-dev
+
+		# PANGOLIN-->deps: CMake (for build environment)
+		apt-get install cmake
+
+		# PANGOLIN-->deps: FFMPEG (For video decoding and image rescaling)
+		apt-get install ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev
+
+		# PANGOLIN-->deps: libjpeg, libpng, libtiff, libopenexr (For reading still-image sequences)
+		apt-get install libjpeg-dev libpng12-dev libtiff5-dev libopenexr-dev
+
+		# PANGOLIN-->build:
+		cd /opt
+
+		# clone Pangolin repo:
+		git clone https://github.com/stevenlovegrove/Pangolin.git
+		
+		cd Pangolin
+		mkdir build
+		cd build
+		cmake ..
+		cmake --build .
+
+		cd ../.. # back to /opt
+
+	# ORBSLAM2-->deps:OPENCV 3.2.0
+	# ----------------------------------------------------------------
+	# https://opencv.org/releases.html
+	# http://www.codebind.com/linux-tutorials/install-opencv-3-2-ubuntu-16-04/
+	# https://www.learnopencv.com/install-opencv3-on-ubuntu/ (use this one)
+
+		## OPENCV-->deps: 
+		#apt-get install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+		#apt-get install python3.5-dev python3-numpy libtbb2 libtbb-dev
+		#apt-get install libjpeg-dev libpng-dev libtiff5-dev libjasper-dev libdc1394-22-dev libeigen3-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev sphinx-common libtbb-dev yasm #libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libopenexr-dev libgstreamer-plugins-base1.0-dev libavutil-dev libavfilter-dev libavresample-dev
+
+
+		# OPENCV-->deps:
+		# Remove any previous installations of x264</h3>
+		apt-get remove x264 libx264-dev
+		
+		# install new deps: 		 
+		apt-get install build-essential checkinstall cmake pkg-config yasm
+		apt-get install git gfortran
+		apt-get install libjpeg8-dev libjasper-dev libpng12-dev
+		 
+		# If you are using Ubuntu 14.04
+		apt-get install libtiff4-dev
+		# If you are using Ubuntu 16.04
+		apt-get install libtiff5-dev
+		 
+		apt-get install libavcodec-dev libavformat-dev libswscale-dev libdc1394-22-dev
+		apt-get install libxine2-dev libv4l-dev
+		apt-get install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
+		apt-get install qt5-default libgtk2.0-dev libtbb-dev
+		apt-get install libatlas-base-dev
+		apt-get install libfaac-dev libmp3lame-dev libtheora-dev
+		apt-get install libvorbis-dev libxvidcore-dev
+		apt-get install libopencore-amrnb-dev libopencore-amrwb-dev
+		apt-get install x264 v4l-utils
+		 
+		# Optional dependencies
+		apt-get install libprotobuf-dev protobuf-compiler
+		apt-get install libgoogle-glog-dev libgflags-dev
+		apt-get install libgphoto2-dev libeigen3-dev libhdf5-dev doxygen
+
+		# Python libraries:
+		apt-get install python-dev python-pip python3-dev python3-pip
+		pip2 install -U pip numpy
+		pip3 install -U pip numpy
+
+		# Set up virtual environment for python (using virtualenv):
+		apt install virtualenv
+		virtualenv opencvenv -p python3.5
+		source opencvenv/bin/activate
+		# now install python libraries within this virtual environment
+		pip install numpy scipy matplotlib scikit-image scikit-learn ipython
+		deactivate
+
+		# # Set up virtual environment for python (using virtualenv wrapper):
+		# pip2 install virtualenv virtualenvwrapper
+		# pip3 install virtualenv virtualenvwrapper
+		# echo "# Virtual Environment Wrapper"  >> ~/.bashrc
+		# echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
+		# source ~/.bashrc
+        # 
+		# ############ For Python 2 ############
+		# # create virtual environment
+		# mkvirtualenv facecourse-py2 -p python2
+		# workon facecourse-py2
+		#   
+		# # now install python libraries within this virtual environment
+		# pip install numpy scipy matplotlib scikit-image scikit-learn ipython
+		#   
+		# # quit virtual environment
+		# deactivate
+		# ######################################
+		#   
+		# ############ For Python 3 ############
+		# # create virtual environment
+		# mkvirtualenv facecourse-py3 -p python3
+		# workon facecourse-py3
+		#   
+		# # now install python libraries within this virtual environment
+		# pip install numpy scipy matplotlib scikit-image scikit-learn ipython
+		#   
+		# # quit virtual environment
+		# deactivate
+		# ######################################
+
+		# OPENCV-->build:
+		cd /opt
+
+		# clone opencv repos:
+		git clone https://github.com/Itseez/opencv.git
+		cd opencv
+		git checkout 3.2.0
+		cd ..
+		git clone https://github.com/Itseez/opencv_contrib.git
+		cd opencv_contrib
+		git checkout 3.2.0
+		cd ..
+
+		cd opencv
+		mkdir build
+		cd build
+
+		cmake -D CMAKE_BUILD_TYPE=RELEASE \
+	      -D CMAKE_INSTALL_PREFIX=/usr/local \
+	      -D INSTALL_C_EXAMPLES=ON \
+	      -D INSTALL_PYTHON_EXAMPLES=ON \
+	      -D WITH_TBB=ON \
+	      -D WITH_V4L=ON \
+	      -D WITH_QT=ON \
+	      -D WITH_OPENGL=ON \
+	      -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+	      -D BUILD_EXAMPLES=ON ..
+
+		# find out number of CPU cores in your machine
+		nproc
+		# substitute 4 by output of nproc
+		make -j4
+		make install
+		sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf.d/opencv.conf'
+		ldconfig	      
+
+		# Create symlink in virtual environment
+		cd /<PATH_TO_VIRTUAL_ENV>/opencvenv/lib/python3.5/site-packages/
+		ln -s /usr/local/lib/python3.5/site-packages/cv2.cpython-35m-x86_64-linux-gnu.so cv2.so
+
+		# test opencv installation with C++ and python bindinds:
+		cd /
+		mkdir data; cd data
+		apt-get install wget
+		apt-get install unzip
+		wget https://www.learnopencv.com/wp-content/uploads/2017/06/RedEyeRemover.zip
+		unzip RedEyeRemover.zip
+
+		# Test C++ code:
+		cd RedEyeRemover
+
+		# remove this display part since might not work in docker container using accessed via ssh:
+		# comment out last 3 lines:
+		#   // Display Result
+    	#	//imshow("Red Eyes", img);
+    	#	//imshow("Red Eyes Removed", imgOut);
+    	#	//waitKey(0);
+
+		apt-get install nano
+		nano removeRedEyes.cpp
+		# compile
+		# Note: there are backticks ( ` ) around pkg-config command not single quotes
+		g++ -std=c++11 removeRedEyes.cpp `pkg-config --libs --cflags opencv` -o removeRedEyes
+		# run
+		./removeRedEyes
+
+		# Test python3 bindings:
+		# Activate Python virtual environment
+		cd /<PATH_TO_ENV/
+		cd /<PATH_TO_TESTS>
+		# start interactive python session in terminal to do a quick check:
+		python
+			> import cv2
+			> print(cv2.__version__)
+			# should see: `3.2.0`
+			> quit()
+
+		# remove this display part since might not work in docker container using accessed via ssh:
+		# comment out last 3 lines and add a line to save the new image:
+		nano removeRedEyes.py
+		# Should now look like this (ignoring leading comment here which is just to enable to be an executable bash script):
+		#	#cv2.imshow('Red Eyes', img)
+    	#	#cv2.imshow('Red Eyes Removed', imgOut)
+    	#	#cv2.waitKey(0)
+		#	cv2.imwrite('red_eyes_removed.jpg', imgOut)
+		python removeRedEyes.py
+		ls # you should now see: red_eyes_removed.jpg
+
+		# deactivate the virutal enviroment:
+		deactivate
+		cd /opt
+
+	# ORBSLAM2-->deps:Eigen3
+	# ----------------------------------------------------------------
+	# http://eigen.tuxfamily.org/
+	# https://eigen.tuxfamily.org/dox/GettingStarted.html
+	# ???
+
+	# ROS: comes with ros-kinetic-base installed due to docker image we start with...do we need full-desktop version ???
+	# ----------------------------------------------------------------
+	# https://hub.docker.com/_/ros/
+	# http://wiki.ros.org/kinetic/Installation/Ubuntu
+	# ???
+
+# ORBSLAM2-->build:
+# --------------------------------------------------------------------
+cd /opt
+# git clone https://github.com/raulmur/ORB_SLAM2.git
+git clone https://github.com/joeliven/ORB_SLAM2.git
+
+# build.sh script is provided to build the Thirdparty libraries and ORB-SLAM2. Please make sure you have installed all required dependencies (see section 2). 
+# Execute:
+cd ORB_SLAM2
+chmod +x build.sh
+./build.sh
+
+# ORBSLAM2-->test:
+# --------------------------------------------------------------------
+cd /data
+wget https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.tgz
+tar -xvzf rgbd_dataset_freiburg1_xyz.tgz
+cd <PATH_TO_ORBSLAM_2
+# ./Examples/Monocular/mono_tum Vocabulary/ORBvoc.txt Examples/Monocular/TUM1.yaml PATH_TO_SEQUENCE_FOLDER
+./Examples/Monocular/mono_tum Vocabulary/ORBvoc.txt Examples/Monocular/TUM1.yaml /data/rgbd_dataset_freiburg1_xyz
+
+
+# Setup python bindings for ORBSLAM2: ORB_SLAM2-PythonBindings
+# https://github.com/jskinn/ORB_SLAM2-PythonBindings
+# --------------------------------------------------------------------
+	# ORB_SLAM2-PythonBindings:-->deps: Boost
+	# ----------------------------------------------------------------
+	# ???
+
+	# ORB_SLAM2-PythonBindings:-->deps: Numpy development headers
+	# ----------------------------------------------------------------
+	# ???
+
+	# ORB_SLAM2-PythonBindings:-->build
+	# ----------------------------------------------------------------
+	# clone the repo
+	cd /opt
+	# git clone https://github.com/jskinn/ORB_SLAM2-PythonBindings.git
+	git clone https://github.com/joeliven/ORB_SLAM2-PythonBindings.git
+
+	# cd back into ORBSLAM2 (not what we just cloned) so that we can apply the patch needed for python bindings:
+	# for details on applying a patch, see: https://www.thegeekstuff.com/2014/12/patch-command-examples
+	cd ORB_SLAM2
+	# ensure no changes by doing git status
+	git status
+	# do a dry run application of the patch to ensure no errors:
+	patch -p1 --dry-run < ../ORB_SLAM2-PythonBindings/orbslam-changes.diff
+	# should see output similar to this:
+	# ..................................
+	# checking file CMakeLists.txt
+	# checking file include/System.h
+	# checking file src/System.cc
+
+	# now apply the patch:
+	patch -p1 < ../ORB_SLAM2-PythonBindings/orbslam-changes.diff
+	# should see output similar to this:
+	# ..................................
+	# patching file CMakeLists.txt
+	# patching file include/System.h
+	# patching file src/System.cc
+
+	# do git status to check diffs:
+	git status
+	git diff
+	# inspect output to ensure patch was applied correctly.
+
+	# rebuild ORB_SLAM2:
+	cd ORB_SLAM2
+	chmod +x build.sh
+	./build.sh
+	# install the ORBSLAM2 headers and .so to /usr/local (if an alternative installation directory is desired, specify it to cmake using -DCMAKE_INSTALL_PREFIX=/your/desired/location).
+	cd build
+	make install
+
+	cd ../..
+	cd ORB_SLAM2-PythonBindings
+	# TODO: either fork this into our own repo, or have a patch file
+	mkdir build
+	cd build
+	cmake ..
+	make
+	make install
+
+	# This will install the .so file to /usr/local/lib/python3.5/dist-packages, such that it should If you have changed the install location of ORBSLAM2, 
+	# you need to indicate where it is installed using -DORB_SLAM2_DIR=/your/desired/location, 
+	# which should be the same as the install prefix above (and contain 'include' and 'lib' folders).
+
+	# Verify installation by typing
+	python3
+	>>> import orbslam2
+	# And there should be no errors.
+
+	# test the python bindings on the python reimplementation of the orbslam2 example(s):
+	python3 examples/orbslam_mono_tum.py Vocabulary/ORBvoc.txt examples/Monocular/TUM1.yaml /data/rgbd_dataset_freiburg1_xyz
+	python3 examples/orbslam_mono_pensa_0.py Vocabulary/ORBvoc.txt examples/Monocular/pensa_1.yaml /data/b90a6c33-4e26-49be-81f3-c8f0ff3762f3
+
+	python3 examples/orbslam_mono_pensa_0.py Vocabulary/ORBvoc.txt examples/Monocular/TUM1.yaml /data/rgbd_dataset_freiburg1_xyz/rgb
+	
+	# TODO: add the part where we softlink the orbslam2.so file to the dist-packages dir in the virtual env
+	# TODO: figure out which changes we want to the ORB_SLAM2-PythonBindins c++ source code
+
+
+
+
+
+
+	# Instructions for running ORB_SLAM2 in docker container on Mac OS X with visual display forwarding (via X11 via XQuartz)
+	# ON HOST MACHINE:
+		# Install quartz:
+		brew install xquartz
+
+		# install socat:
+		brew install socat
+		
+		# allow XQuartz to allow indirect GLX contexts. RefNote: http://www.ks.uiuc.edu/Research/vmd/mailing_list/vmd-l/28494.html
+		# First quit XQuartz if it's running, then run the following command:
+		defaults write org.macosforge.xquartz.X11 enable_iglx -bool true
+
+		# launch socat and docker image with appropriate settings:
+		# see: https://github.com/moby/moby/issues/8710    search for user: ikabar-tracxpoint
+		# 1: make sure XQuartz is closed.
+		# 2: create tmux session to launch socat in:
+		tmux new-session -s socat
+		# 3: launch socat in tmux session to listen on port 6000 via TCP for the incoming gui traffic:
+		socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\"
+		
+		# 4: exit the tmux session with ctrl+B D, leaving socat running in background.
+		# 5: figure out your local IP address to use in passing along the display from docker image to your host IP for displaying:
+		ifconfig en0
+		# in the line that looks like:
+		#		inet 192.168.43.25 netmask 0xffffff00 broadcast 192.168.43.255
+		# use the:
+		#	192.168.43.25
+
+		# 6: launch docker container from image, using both -v flag to mount the /tmp/.X11-unix dir in the docker image to that on host machine
+		# and the -e flag to pass the $DISPLAY enivornment variable with IP ADDRESS obtained above as value:
+		docker run --name loc2 -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=192.168.43.25:0 joeliven/pensa_orbslam2:v01
+
+	# BACK IN DOCKER CONTAINER:
+	# install tmux if not already installed:
+	apt-get install tmux
+
+	# Create a tmux session to run orbslam2 inside of since right now, I can't figure out how to terminate the process after it finishes (when using GUI).
+	# By running it in it's own tmux session, we can just kill the tmux session rather than having to kill the entire container and restart:
+	tmux new-session -s orbslam0
+
+	# activate the python virtual env needed for orbslam:
+	source /opt/opencvenv/bin/activate
+
+	# navigate to the ORB_SLAM2-PythonBindings dir to run the examples:
+	cd /opt/ORB_SLAM2-PythonBindings
+
+	# run the pensa example that uses the visualization:
+	python3 examples/orbslam_mono_pensa_0.py Vocabulary/ORBvoc.txt examples/Monocular/pensa_1.yaml /data/b90a6c33-4e26-49be-81f3-c8f0ff3762f3
+
+
+
+	
+
+
+
+	
+
