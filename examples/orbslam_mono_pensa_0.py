@@ -23,7 +23,7 @@ def main(vocab_path, settings_path, sequence_dir, fps=10):
     num_images = len(im_paths)
 
     slam = orbslam2.System(vocab_path, settings_path, orbslam2.Sensor.MONOCULAR)
-    slam.set_use_viewer(False)
+    slam.set_use_viewer(True)
     slam.initialize()
 
     times_track = [0 for _ in range(num_images)]
