@@ -23,8 +23,8 @@ slam:
     - .png
     - .PNG
   camMtx:
-    bucket:
-    keys: 'pensa-camera-calibrations'
+    bucket: 'pensa-camera-calibrations'
+    keys:
       drone197: 'sdf000003_drone197_v001.xml'
     layout:
       FXi: 0
