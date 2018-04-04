@@ -37,4 +37,4 @@ slam:
       CYj: 2
 orbslam2:
   settings_template_path: 'config_slam/pensa_orbslam2_settings_template.yaml'
-  vocab_path: 'Vocabulary/ORBvoc.txt.tar.gz'
+  vocab_path: 'Vocabulary/ORBvoc.txt'
