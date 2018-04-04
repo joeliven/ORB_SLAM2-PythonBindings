@@ -203,7 +203,7 @@ class SlamService(object):
 
         self.scan_dirs.appendleft(result)
 
-    def signal_completion(self, scan_info):
+    def signal_completion(self, t0, t1, scanID, bucket_name, prefix):
         """
         Notify the rest of the system that the slam service has finished processing this scan,
         by sending an sqs message to the pensa-localization-slam sqs Q that the
@@ -212,37 +212,10 @@ class SlamService(object):
         :param scan_info:
         :return:
         """
+        msg = ','.join([t0,t1,scanID,bucket_name,prefix])
+        print('msg: %s' % str(msg))
         res = self.queue_results.send_message(MessageBody=msg)
         _log(res.get('MessageId'))
-
-        pass
-        # RIGHT HERE: TODO: signal the extraction service to grab crops from autolabelled images and upload
-        # to specified classifier datasets.
-
-        # video0bucket = scan_info[video0bucket_KEY]
-        # video0key = scan_info[video0key_KEY]
-        # imagesbucket = scan_info[imagesbucket_KEY]
-        # prefix = scan_info[prefix_KEY]
-        # timestamp = scan_info[timestamp_KEY]
-        # scanID = scan_info[scanID_KEY]
-        # droneID = scan_info[droneID_KEY]
-        # modelID = scan_info[modelID_KEY]
-        #
-        # sqs_msg_str = get_sqs_msg(video0bucket,
-        #                           video0key,
-        #                           imagesbucket,
-        #                           prefix,
-        #                           timestamp,
-        #                           scanID,
-        #                           droneID,
-        #                           modelID)
-        #
-        # # Send a message signaling the stand-alone autolabelling service that a new scan is ready to be autolabelled:
-        # _log('msg: %s' % sqs_msg_str)
-        # txt = '*RE/AUTOLABELLING:* Sending sqs msg to signal Autolabelling service...'
-        # _send_slack_status_log_print(txt)
-        # res = self.queue_autolabel.send_message(MessageBody=sqs_msg_str)
-        # _log(res.get('MessageId'))
 
     def pop_scan_dir(self):
         """
@@ -299,6 +272,7 @@ class SlamService(object):
         trajectory_s3_url = s3_upload_file(client, bucket, key=trajectory_key, path=trajectoryPath, content_type='text/plain')
         trajectory_msg = '*SLAM/LOGGING*: <%s| trajectory file>' % (trajectory_s3_url)
         _send_slack_status_log_print(text=trajectory_msg)
+        return trajectory_key
 
     def submit_logs(self, timestamp0, timestamp1, scanID, imgdir, trajectoryPath=None, log_which={'all'}):
         """
@@ -315,12 +289,15 @@ class SlamService(object):
         client = boto3.client('s3')
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.log_bucket_name)
+        bucket_and_keys = {}
 
         if 'all' in log_which:
             log_which = {'trajectory'}
         # upload the trajectory of poses (as a text file) to s3 + slack post
         if self.cfg.logging.get('trajectory') and 'trajectory' in log_which:
-            self.log_trajectory(client, bucket, timestamp0, timestamp1, scanID, trajectoryPath)
+            trajectory_key = self.log_trajectory(client, bucket, timestamp0, timestamp1, scanID, trajectoryPath)
+            bucket_and_keys['trajectory'] = {'bucket': self.log_bucket_name, 'key': trajectory_key}
+        return bucket_and_keys
 
     def updateSettingsFile(self, camMtx, fps, saveDir, templatePath=None):
         """
@@ -399,11 +376,14 @@ class SlamService(object):
 
                     image_paths = sorted(get_filenames(imagesdir, ext=tuple(self.cfg.slam.image_exts)))
                     nb_image_files = len(image_paths)
+                    bucket_and_keys = {}
 
                     if nb_image_files > 0:
                         trajectory, trajectorySavePath = self.slamAlgo.runSlam(image_paths, settingsPath, fps, useViewer=False)
-                        self.submit_logs(timestamp0, timestamp1, scanID, imagesdir, trajectoryPath=trajectorySavePath, log_which={'transforms'})
+                        bucket_and_keys.update(self.submit_logs(timestamp0, timestamp1, scanID, imagesdir, trajectoryPath=trajectorySavePath, log_which={'trajectory'}))
 
+                        traj_key = bucket_and_keys['trajectory']
+                        self.signal_completion(timestamp0, timestamp1, scanID, self.log_bucket_name, traj_key)
 
                     # clean up:
                     if os.path.exists(imagesdir):
