@@ -382,7 +382,7 @@ class SlamService(object):
                         trajectory, trajectorySavePath = self.slamAlgo.runSlam(image_paths, settingsPath, fps, useViewer=False)
                         bucket_and_keys.update(self.submit_logs(timestamp0, timestamp1, scanID, imagesdir, trajectoryPath=trajectorySavePath, log_which={'trajectory'}))
 
-                        traj_key = bucket_and_keys['trajectory']
+                        traj_key = bucket_and_keys['trajectory']['key']
                         self.signal_completion(timestamp0, timestamp1, scanID, self.log_bucket_name, traj_key)
 
                     # clean up:
