@@ -388,7 +388,7 @@ class SlamService(object):
                     droneID = scan_info[droneID_KEY]
                     modelID = scan_info[modelID_KEY]
                     imagesdir = scan_info[TMPDIR_KEY]
-                    fps = scan_info[FPS_KEY]
+                    fps = scan_info.get(FPS_KEY, 10)
                     camMtxPath = scan_info[CAMMTX_KEY]
 
                     # Load the camMtx so we can update the settings file with the Fx, Fy, Cx, Cy, and fps values
