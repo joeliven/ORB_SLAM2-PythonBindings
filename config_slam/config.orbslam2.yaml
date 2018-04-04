@@ -1,0 +1,40 @@
+# global config
+env: 'DEV0'
+logging:
+  trajectory: True
+  info:
+    slack:
+      channel: 'status-develop'
+      url: 'https://hooks.slack.com/services/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'
+    s3:
+      bucket: 'pensa-slam-results-dev'
+slam:
+  active: True
+  q_name: 'pensa-slam-dev'
+  q_name_results: 'pensa-slam-results-dev'
+  q_poll_interval: 5
+  bucket_transfer_pool: 4
+  progress_interval: 10
+  image_exts:
+    - .jpg
+    - .jpeg
+    - .JPEG
+    - .JPG
+    - .png
+    - .PNG
+  camMtx:
+    bucket:
+    keys: 'pensa-camera-calibrations'
+      drone197: 'sdf000003_drone197_v001.xml'
+    layout:
+      FXi: 0
+      FXj: 0
+      FYi: 1
+      FYj: 1
+      CXi: 0
+      CXj: 2
+      CYi: 1
+      CYj: 2
+orbslam2:
+  settings_template_path: 'config_slam/pensa_orbslam2_settings_template.yaml'
+  vocab_path: 'Vocabulary/ORBvoc.txt.tar.gz'

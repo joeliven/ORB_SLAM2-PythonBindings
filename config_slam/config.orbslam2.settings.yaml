@@ -1,0 +1,31 @@
+# global config
+orbslam2:
+  settings:
+    real:
+      - 'Camera.fx'
+      - 'Camera.fy'
+      - 'Camera.cx'
+      - 'Camera.cy'
+      - 'Camera.k1'
+      - 'Camera.k2'
+      - 'Camera.p1'
+      - 'Camera.p2'
+      - 'Camera.k3'
+      - 'Camera.fps'
+      - 'ORBextractor.scaleFactor'
+      - 'Viewer.KeyFrameSize'
+      - 'Viewer.KeyFrameLineWidth'
+      - 'Viewer.GraphLineWidth'
+      - 'Viewer.PointSize'
+      - 'Viewer.CameraSize'
+      - 'Viewer.CameraLineWidth'
+      - 'Viewer.ViewpointX'
+      - 'Viewer.ViewpointY'
+      - 'Viewer.ViewpointZ'
+      - 'Viewer.ViewpointF'
+    int:
+      - 'Camera.RGB'
+      - 'ORBextractor.nFeatures'
+      - 'ORBextractor.nLevels'
+      - 'ORBextractor.iniThFAST'
+      - 'ORBextractor.minThFAST'

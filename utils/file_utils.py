@@ -3,7 +3,12 @@ import os
 import zipfile as zipf
 from io import BytesIO
 import pickle
-# import boto3
+import boto3
+try:
+    from utils.logging_utils import _send_slack_status_log_print, _log
+except ImportError as e:
+    print(str(e))
+    from logging_utils import _send_slack_status_log_print, _log
 import time
 from operator import itemgetter
 
@@ -145,91 +150,89 @@ def s3_upload_file_obj(client, bucket, key, fileobj, content_type, expires=36000
         return client.generate_presigned_url('get_object', Params={'Bucket': bucket.name, 'Key': key}, ExpiresIn=expires)
 
 
-# def download_aws_file(bucket_name, download_dir, prefix, suffix=None, type=None, status_header='*RE/PREPROCESSING:*', send_status_update=False):
-#     if type is None:
-#         if suffix is not None:
-#             type = suffix
-#         else:
-#             type = 'unspecified'
-#
-#     txt = '%s Finding %s file(s) from bucket _%s_ with prefix _%s_ and suffix _%s_ and downloading to _%s_' % (status_header, type, bucket_name, prefix, suffix, download_dir)
-#     _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
-#
-#     start = time.time()
-#
-#     # Create a new resource for each worker to avoid interference
-#     s3 = boto3.resource('s3')
-#     bucket = s3.Bucket(bucket_name)
-#
-#     download_paths = []
-#     keys = []
-#     for o in bucket.objects.filter(Prefix=prefix):
-#         filename = o.key
-#         print('filename: %s' % filename)
-#         if suffix and not filename.endswith(suffix):
-#             continue
-#         filename = os.path.split(filename)[1]
-#         download_path = os.path.join(download_dir, filename)
-#         keys.append(o.key)
-#         download_paths.append(download_path)
-#
-#     nb_files = len(download_paths)
-#     if len(download_paths) > 0:
-#         mkdir_p(download_dir)
-#         if nb_files > 1:
-#             _log('Warning: %d %s files found with prefix %s and suffix %s' % (nb_files, type, prefix, suffix))
-#         keys_paths = zip(keys, download_paths)
-#         sorted_keys_paths = sorted(keys_paths, key=itemgetter(0))
-#         keys, download_paths = zip(*sorted_keys_paths)
-#         key = keys[-1]
-#         download_path = download_paths[-1]
-#         txt = '%s Downloading %d of %d possible %s file(s) to %s....' % (status_header, 1, nb_files, type, download_path)
-#         _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
-#         bucket.download_file(key, download_path)
-#         dur = time.time() - start
-#         txt = '%s *_%s_* found and downloaded in %f seconds.' % (status_header, key, dur)
-#         _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
-#     else:
-#         key, download_path = None, None
-#         txt = '%s Failed to find any matching %s files in:\n\tbucket:\t%s\n\tprefix:\t%s\n\tsuffix:\t%s' % (status_header, type, bucket_name, prefix, suffix)
-#         _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
-#     return key, download_path
-#
-#
-# def download_aws_files(bucket_name, download_dir, prefix, suffix=None, type=None, status_header='*RE/PREPROCESSING:*', send_status_update=False):
-#     if type is None:
-#         if suffix is not None:
-#             type = suffix
-#         else:
-#             type = 'unspecified'
-#
-#     txt = '%s Downloading %s files to %s' % (status_header, type, download_dir)
-#     _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
-#
-#     start = time.time()
-#
-#     # Create a new resource for each worker to avoid interference
-#     s3 = boto3.resource('s3')
-#     bucket = s3.Bucket(bucket_name)
-#
-#     download_paths = []
-#     keys = []
-#     mkdir_p(download_dir)
-#     for o in bucket.objects.filter(Prefix=prefix):
-#         filename = o.key
-#         if suffix and not filename.endswith(suffix):
-#             continue
-#         filename = os.path.split(filename)[1]
-#         download_path = os.path.join(download_dir, filename)
-#         bucket.download_file(o.key, download_path)
-#         keys.append(o.key)
-#         download_paths.append(download_path)
-#
-#     nb_files = len(download_paths)
-#     dur = time.time() - start
-#     avg = dur / float(nb_files) if nb_files > 0 else 0.
-#     txt = '%s Done downloading %d %s files in %f seconds (%f / file).' % (status_header, nb_files, type, dur, avg)
-#     _send_slack_status_log_print(text=txt)
-#     return keys, download_paths
+def download_aws_file(bucket_name, download_dir, prefix, suffix=None, type=None, status_header='*RE/PREPROCESSING:*', send_status_update=False):
+    if type is None:
+        if suffix is not None:
+            type = suffix
+        else:
+            type = 'unspecified'
+
+    txt = '%s Finding %s file(s) from bucket _%s_ with prefix _%s_ and suffix _%s_ and downloading to _%s_' % (status_header, type, bucket_name, prefix, suffix, download_dir)
+    _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
+
+    start = time.time()
+
+    # Create a new resource for each worker to avoid interference
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+
+    download_paths = []
+    keys = []
+    for o in bucket.objects.filter(Prefix=prefix):
+        filename = o.key
+        print('filename: %s' % filename)
+        if suffix and not filename.endswith(suffix):
+            continue
+        filename = os.path.split(filename)[1]
+        download_path = os.path.join(download_dir, filename)
+        keys.append(o.key)
+        download_paths.append(download_path)
+
+    nb_files = len(download_paths)
+    if len(download_paths) > 0:
+        mkdir_p(download_dir)
+        if nb_files > 1:
+            _log('Warning: %d %s files found with prefix %s and suffix %s' % (nb_files, type, prefix, suffix))
+        keys_paths = zip(keys, download_paths)
+        sorted_keys_paths = sorted(keys_paths, key=itemgetter(0))
+        keys, download_paths = zip(*sorted_keys_paths)
+        key = keys[-1]
+        download_path = download_paths[-1]
+        txt = '%s Downloading %d of %d possible %s file(s) to %s....' % (status_header, 1, nb_files, type, download_path)
+        _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
+        bucket.download_file(key, download_path)
+        dur = time.time() - start
+        txt = '%s *_%s_* found and downloaded in %f seconds.' % (status_header, key, dur)
+        _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
+    else:
+        key, download_path = None, None
+        txt = '%s Failed to find any matching %s files in:\n\tbucket:\t%s\n\tprefix:\t%s\n\tsuffix:\t%s' % (status_header, type, bucket_name, prefix, suffix)
+        _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
+    return key, download_path
 
 
+def download_aws_files(bucket_name, download_dir, prefix, suffix=None, type=None, status_header='*RE/PREPROCESSING:*', send_status_update=False):
+    if type is None:
+        if suffix is not None:
+            type = suffix
+        else:
+            type = 'unspecified'
+
+    txt = '%s Downloading %s files to %s' % (status_header, type, download_dir)
+    _send_slack_status_log_print(text=txt, send_status_update=send_status_update)
+
+    start = time.time()
+
+    # Create a new resource for each worker to avoid interference
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+
+    download_paths = []
+    keys = []
+    mkdir_p(download_dir)
+    for o in bucket.objects.filter(Prefix=prefix):
+        filename = o.key
+        if suffix and not filename.endswith(suffix):
+            continue
+        filename = os.path.split(filename)[1]
+        download_path = os.path.join(download_dir, filename)
+        bucket.download_file(o.key, download_path)
+        keys.append(o.key)
+        download_paths.append(download_path)
+
+    nb_files = len(download_paths)
+    dur = time.time() - start
+    avg = dur / float(nb_files) if nb_files > 0 else 0.
+    txt = '%s Done downloading %d %s files in %f seconds (%f / file).' % (status_header, nb_files, type, dur, avg)
+    _send_slack_status_log_print(text=txt)
+    return keys, download_paths

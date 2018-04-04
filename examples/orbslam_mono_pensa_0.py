@@ -5,7 +5,7 @@ import os
 import orbslam2
 import time
 import cv2
-from lib.utils.file_utils import get_filenames
+from utils.file_utils import get_filenames
 from pprint import pprint
 
 
