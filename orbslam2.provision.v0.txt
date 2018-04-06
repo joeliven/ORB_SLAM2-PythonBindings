@@ -373,7 +373,10 @@ cd <PATH_TO_ORBSLAM_2
 
 		# 6: launch docker container from image, using both -v flag to mount the /tmp/.X11-unix dir in the docker image to that on host machine
 		# and the -e flag to pass the $DISPLAY enivornment variable with IP ADDRESS obtained above as value:
-		docker run --name loc2 -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=192.168.43.25:0 joeliven/pensa_orbslam2:v01
+		docker run --name loc2 -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=192.168.43.25:0 joeliven/pensa_orbslam2:v02
+		# or 
+		#	docker run --name loc2 -it joeliven/pensa_orbslam2:v02
+		# to run without support for X11 display forwarding
 
 	# BACK IN DOCKER CONTAINER:
 	# install tmux if not already installed:

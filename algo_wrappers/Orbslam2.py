@@ -7,6 +7,7 @@ import time
 import cv2
 from utils.file_utils import get_filenames
 from pprint import pprint
+from copy import deepcopy
 
 
 class Orbslam2(object):
@@ -80,6 +81,92 @@ class Orbslam2(object):
         print('median tracking time: {0}'.format(times_track[nbImages // 2]))
         print('mean tracking time: {0}'.format(total_time / nbImages))
         return traj, savePath
+
+    def runSlam2(self, imagePaths, settingsPath, fps, useViewer=False):
+        if len(imagePaths) == 0:
+            return
+        imagePathsReversed = deepcopy(imagePaths)
+        # reverse the image list to go through it backwards the second time once the map has been well-formed:
+        imagePathsReversed = imagePathsReversed[::-1]
+        imagePaths += imagePathsReversed
+        assert len(imagePaths) % 2 == 0, 'len(imagePaths): %d is not even but has to be!!!' % len(imagePaths)
+
+        imageDir = os.path.split(imagePaths[0])[0]
+        fps_inv = 1. / float(fps)
+        timestamps = []
+        for i in range(len(imagePaths)):
+            if i == 0:
+                t = time.time()
+            else:
+                t = timestamps[i - 1] + fps_inv
+            timestamps.append(t)
+
+        nbImages = len(imagePaths)
+        halfPoint = nbImages // 2
+
+        slam = orbslam2.System(self.vocabPath, settingsPath, orbslam2.Sensor.MONOCULAR)
+        slam.set_use_viewer(useViewer)
+        slam.initialize()
+
+        times_track = [0 for _ in range(nbImages)]
+        print('-----')
+        print('Start processing sequence ...')
+        print('Images in the sequence: {0}'.format(halfPoint))
+
+        print('Starting forward pass...')
+        tracking = False
+        for idx in range(nbImages):
+            if idx + 1 == halfPoint:
+                print('Starting backward pass...')
+                tracking = True
+
+            imPath = imagePaths[idx]
+            image = cv2.imread(imPath, cv2.IMREAD_UNCHANGED)
+            tframe = timestamps[idx]
+
+            if image is None:
+                print("failed to load image at {0}".format(imPath))
+                return 1
+
+            t1 = time.time()
+            pose_success = slam.process_image_mono(image, tframe)
+            t2 = time.time()
+            status = 'success' if pose_success else 'failure'
+            print('idx %d: pose %s' % (idx, status))
+
+            ttrack = t2 - t1
+            times_track[idx] = ttrack
+
+            t = 0
+            if idx < nbImages - 1:
+                t = timestamps[idx + 1] - tframe
+            elif idx > 0:
+                t = tframe - timestamps[idx - 1]
+
+            if ttrack < t:
+                time.sleep(t - ttrack)
+
+        trajFull = slam.get_trajectory_points()
+        pprint(trajFull)
+        print('len(trajFull): %d' % len(trajFull))
+        savePath = os.path.join(imageDir, 'trajectory.txt')
+        if len(trajFull) < halfPoint:
+            print('WARNING: ORBSLAM2 Failed. Returning empty trajectory.')
+            save_trajectory([], savePath)
+            trajForward = []
+        else:
+            trajForward = trajFull[-halfPoint:]
+            trajForward = trajForward[::-1]
+            print('len(trajForward): %d' % len(trajForward))
+            save_trajectory(trajForward, savePath)
+
+        slam.shutdown()
+        times_track = sorted(times_track)
+        total_time = sum(times_track)
+        print('-----')
+        print('median tracking time: {0}'.format(times_track[nbImages // 2]))
+        print('mean tracking time: {0}'.format(total_time / nbImages))
+        return trajForward, savePath
 
 
 def save_trajectory(trajectory, savePath):

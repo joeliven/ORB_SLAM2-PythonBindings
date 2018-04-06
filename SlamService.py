@@ -379,7 +379,7 @@ class SlamService(object):
                     bucket_and_keys = {}
 
                     if nb_image_files > 0:
-                        trajectory, trajectorySavePath = self.slamAlgo.runSlam(image_paths, settingsPath, fps, useViewer=False)
+                        trajectory, trajectorySavePath = self.slamAlgo.runSlam2(image_paths, settingsPath, fps, useViewer=False)
                         bucket_and_keys.update(self.submit_logs(timestamp0, timestamp1, scanID, imagesdir, trajectoryPath=trajectorySavePath, log_which={'trajectory'}))
 
                         traj_key = bucket_and_keys['trajectory']['key']
