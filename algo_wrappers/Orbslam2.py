@@ -153,7 +153,7 @@ class Orbslam2(object):
         if len(trajFull) < halfPoint:
             trajForward = trajFull[::-1]
             print('len(trajForward): %d' % len(trajForward))
-            nbMissed = len(trajForward) - halfPoint
+            nbMissed = halfPoint - len(trajForward)
             print('WARNING: ORBSLAM2 Failed to track at all on forward pass. Returning trajectory with final %d missing poses copied.' % nbMissed)
             lastPoseCopies = [deepcopy(trajForward) for _ in range(nbMissed)]
             trajForward += lastPoseCopies
