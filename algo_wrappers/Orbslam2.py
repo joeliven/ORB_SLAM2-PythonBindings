@@ -151,15 +151,19 @@ class Orbslam2(object):
         print('len(trajFull): %d' % len(trajFull))
         savePath = os.path.join(imageDir, 'trajectory.txt')
         if len(trajFull) < halfPoint:
-            print('WARNING: ORBSLAM2 Failed. Returning empty trajectory.')
-            save_trajectory([], savePath)
-            trajForward = []
+            trajForward = trajFull[::-1]
+            print('len(trajForward): %d' % len(trajForward))
+            nbMissed = len(trajForward) - halfPoint
+            print('WARNING: ORBSLAM2 Failed to track at all on forward pass. Returning trajectory with final %d missing poses copied.' % nbMissed)
+            lastPoseCopies = [deepcopy(trajForward) for _ in range(nbMissed)]
+            trajForward += lastPoseCopies
         else:
             trajForward = trajFull[-halfPoint:]
             trajForward = trajForward[::-1]
             print('len(trajForward): %d' % len(trajForward))
-            save_trajectory(trajForward, savePath)
 
+        save_trajectory(trajForward, savePath)
+        assert len(trajForward) == halfPoint, 'len(trajForward) %d != halpoint %d' % (len(trajForward), halfPoint)
         slam.shutdown()
         times_track = sorted(times_track)
         total_time = sum(times_track)
