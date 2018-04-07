@@ -25,7 +25,8 @@ slam:
   camMtx:
     bucket: 'pensa-camera-calibrations'
     keys:
-      drone197: 'sdf000003_drone197_v001.xml'
+      drone196: 'drone196_v000.xml'
+      drone197: 'drone197_v001.xml'
     layout:
       FXi: 0
       FXj: 0
